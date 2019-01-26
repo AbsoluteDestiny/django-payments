@@ -35,6 +35,7 @@ class StripeFormMixin(object):
                         amount=int(self.payment.total * 100),
                         currency=self.payment.currency,
                         card=data['stripeToken'],
+                        receipt_email=self.payment.billing_email
                         description='%s %s' % (
                             self.payment.billing_last_name,
                             self.payment.billing_first_name))
@@ -89,6 +90,7 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
         stripe_attrs['data-address-state'] = self.payment.billing_country_area
         stripe_attrs['data-address-zip'] = self.payment.billing_postcode
         stripe_attrs['data-address-country'] = self.payment.billing_country_code
+        stripe_attrs['data-email'] = self.payment.billing_email
         widget_map = {
             'name': SensitiveTextInput(
                 attrs={'autocomplete': 'cc-name', 'required': 'required'}),
