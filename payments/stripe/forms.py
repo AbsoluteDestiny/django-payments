@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-
+import json
 import stripe
 from django import forms
 from django.utils.translation import ugettext as _
@@ -30,15 +30,21 @@ class StripeFormMixin(object):
             if not self.payment.transaction_id:
                 stripe.api_key = self.provider.secret_key
                 try:
-                    self.charge = stripe.Charge.create(
-                        capture=False,
-                        amount=int(self.payment.total * 100),
-                        currency=self.payment.currency,
-                        card=data['stripeToken'],
-                        receipt_email=self.payment.billing_email
-                        description='%s %s' % (
-                            self.payment.billing_last_name,
-                            self.payment.billing_first_name))
+                    if self.payment.billing_email:
+                        self.charge = stripe.Charge.create(
+                            capture=False,
+                            amount=int(self.payment.total * 100),
+                            currency=self.payment.currency,
+                            card=data['stripeToken'],
+                            receipt_email=self.payment.billing_email,
+                            description=self.payment.description)
+                    else:
+                        self.charge = stripe.Charge.create(
+                            capture=False,
+                            amount=int(self.payment.total * 100),
+                            currency=self.payment.currency,
+                            card=data['stripeToken'],
+                            description=self.payment.description)
                 except stripe.CardError as e:
                     # Making sure we retrieve the charge
                     charge_id = e.json_body['error']['charge']
@@ -57,7 +63,7 @@ class StripeFormMixin(object):
 
     def save(self):
         self.payment.transaction_id = self.charge.id
-        self.payment.attrs.charge = stripe.util.json.dumps(self.charge)
+        self.payment.attrs.charge = json.dumps(self.charge)
         self.payment.change_status(PaymentStatus.PREAUTH)
         if self.provider._capture:
             self.payment.capture()

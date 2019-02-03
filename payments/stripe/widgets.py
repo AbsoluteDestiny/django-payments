@@ -15,19 +15,18 @@ class StripeCheckoutWidget(Input):
 
     def __init__(self, provider, payment, *args, **kwargs):
         attrs = kwargs.get('attrs', {})
-        import pdb; pdb.set_trace()
-
         kwargs['attrs'] = {
             'class': 'stripe-button',
             'data-key': provider.public_key,
             'data-image': provider.image,
             'data-name': provider.name,
-            'data-email': payment or _('test'),
             'data-description': payment.description or _('Total payment'),
             # Stripe accepts cents
             'data-amount': int(payment.total * 100),
             'data-currency': payment.currency
         }
+        if payment.billing_email:
+            kwargs['attrs']['data-email'] = payment.billing_email
         kwargs['attrs'].update(attrs)
         super(StripeCheckoutWidget, self).__init__(*args, **kwargs)
 
